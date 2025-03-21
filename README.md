@@ -10,7 +10,7 @@ cve监控推送，支持tg，钉钉，微信，飞书等并实现cve描述翻译
 效果
 ![image](https://github.com/user-attachments/assets/db0bb777-b057-4665-9e33-8a0b20f8b76b)
 # 鸣谢
- yhy0 提供初始代码
+ yhy0 提供初始代码 由于翻译接口失效，所以在这里借鉴大佬代码，复活了翻译功能
 
 #设置教程
 # 推送设置
