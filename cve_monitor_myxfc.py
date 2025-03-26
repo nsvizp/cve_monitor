@@ -22,6 +22,7 @@ import hashlib
 import Crypto.Cipher.AES as AES
 from Crypto.Util.Padding import pad, unpad
 import base64
+from functools import lru_cache
 
 
 # cve 仓库拥有者计数器(也就是黑名单，不过每天会清空重新计数)，每天最多推送一个人名下的三个 cve 仓库
@@ -533,6 +534,7 @@ def decrypt(ciphertext):
         print(f"解密失败: {str(e)}")
         return None
 
+@lru_cache(maxsize=100)
 # 请求参数
 def translate(des):
     try:
@@ -584,17 +586,14 @@ def translate(des):
             "abtest": "0",
             "yduuid": "abcdefg"
         }
-
-
-
-        response = requests.post(url, headers=headers, data=data, timeout=10)
+       response = requests.post(url, headers=headers, data=data, timeout=10)
         response.raise_for_status()  # 自动处理HTTP错误
-
         encrypted_data = response.text.strip()
         # print("原始响应:", encrypted_data)
 
         # 直接解密原始响应
         decrypted_text = decrypt(encrypted_data)
+
         # if decrypted_text:
         # print("\n翻译结果:")
         # print(json.dumps(json.loads(decrypted_text), indent=2, ensure_ascii=False))
@@ -602,17 +601,32 @@ def translate(des):
         # print(decrypted_text)
         # print("=============================================")
         result_dict = json.loads(decrypted_text)
-        # result = ""
-        return result_dict['translateResult'][0][0]['tgt']
-    except:
+        # 提取所有tgt字段并合并
+        # tgt_segments = []
+        # try:
+        #     # 遍历外层列表（处理多段落情况）
+        #     for paragraph in result_dict.get("translateResult", []):
+        #         # 遍历内层列表（处理每段多个句子）
+        #         for item in paragraph:
+        #             if isinstance(item, dict) and item.get("tgt"):
+        #                 tgt_segments.append(item["tgt"])
+        # except Exception as e:
+        #     print(f"解析翻译结果失败: {str(e)}")
+
+
+       # 改为生成器降低内存
+        tgt_segments = (
+            item["tgt"]
+            for paragraph in result_dict.get("translateResult", [])
+            for item in paragraph
+            if isinstance(item, dict) and item.get("tgt")
+        )
+        # 合并为单个字符串（保留原有标点）
+        return "".join(tgt_segments) if tgt_segments else "翻译结果为空"
+        # return result_dict['translateResult'][0][0]['tgt']
+   except:
         return "翻译出问题++++++++++++++++++++++++++++++++++++++++++++++++++++"
-    #     else:
-    #         print("解密失败，请检查密钥或响应数据")
-    # except requests.exceptions.RequestException as e:
-    #     print(f"请求异常: {str(e)}")
-    # except json.JSONDecodeError:
-    #     print("响应不是有效JSON格式")
-        # print(decode()['translateResult'][0][0]['tgt'])
+
 
 # 钉钉
 def dingding(text, msg,webhook,secretKey):
@@ -667,7 +681,8 @@ def get_cve_des_zh(cve):
         # 添加默认返回值
         if load_config()[-1]:
             translated = translate(des)
-            return translated or "翻译失败", cve_time  # 处理翻译返回None的情况
+            # return translated or "翻译失败", cve_time  # 处理翻译返回None的情况
+            return translated,cve_time
         else:
             return des, cve_time
     except Exception as e:
