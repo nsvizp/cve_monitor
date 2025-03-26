@@ -24,6 +24,8 @@ cve监控推送，自定义关键词、仓库等，支持tg，钉钉，微信，
 ![image](https://github.com/user-attachments/assets/d3f2578e-3b53-4485-8d1e-4f58a16fbdfb)
 
 ​			选择加签
+
+
 ![image](https://github.com/user-attachments/assets/aeb3f74c-0a86-4db1-8ee6-e2caee583fcd)
 
 
@@ -31,7 +33,9 @@ cve监控推送，自定义关键词、仓库等，支持tg，钉钉，微信，
 
 效果：
 
-<img src="images/image-20211118145021974.png" style="zoom:70%"/>
+![image](https://github.com/user-attachments/assets/0d0f6c1a-9f93-4358-8b32-2a9508fbac5c)
+
+
 
 ##  飞书捷径推送
 
