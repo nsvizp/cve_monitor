@@ -82,7 +82,7 @@ pip install python-telegram-bot
 ### 获得ID
 将bot加入群组后，发送几条消息。访问https://api.telegram.org/bot{TOKEN}/getUpdates
 用户ID同理，
-![image-20210225090416314](images/124256679-27701e00-db5e-11eb-9432-d3a9048daeec.png)
+
 
 `config.yaml`中配置`tgbot`的`token`等信息,`enable`设置为 `1`表示推送
 
