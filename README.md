@@ -21,7 +21,7 @@ cve监控推送，自定义关键词、仓库等，支持tg，钉钉，微信，
  
 ![image](https://github.com/user-attachments/assets/db64e077-39e8-48ca-a89b-937922852396)
 
-3.   智能群助手添加自定义机器人
+2.   智能群助手添加自定义机器人
 ![image](https://github.com/user-attachments/assets/d3f2578e-3b53-4485-8d1e-4f58a16fbdfb)
 
 ​			选择加签
@@ -98,9 +98,9 @@ pip install python-telegram-bot
 
 ps：因微信的原因，server酱的旧版将在2021年4月后下线，新版以企业微信为主，这里使用的是旧版，想改新版的话，搞个企业微信，从新配置server酱，使用新链接 sctapi.ftqq.com
 
-具体查看server酱官方，http://sc.ftqq.com/ ，配置简单，只需要将脚本中的uri换掉即可
+具体查看server酱官方，https://sct.ftqq.com/，配置简单，只需要将脚本中的uri换掉即可
 
-[server酱新版](https://sct.ftqq.com/)支持多通道（微信、客户端、群机器人、邮件和短信）
+[server酱新版]((https://sct.ftqq.com/))支持多通道（微信、客户端、群机器人、邮件和短信）
 
 `config.yaml`中配置`server`的`token`等信息,`enable`设置为 `1`表示推送
 
