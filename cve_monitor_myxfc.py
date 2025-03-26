@@ -586,7 +586,7 @@ def translate(des):
             "abtest": "0",
             "yduuid": "abcdefg"
         }
-       response = requests.post(url, headers=headers, data=data, timeout=10)
+        response = requests.post(url, headers=headers, data=data, timeout=10)
         response.raise_for_status()  # 自动处理HTTP错误
         encrypted_data = response.text.strip()
         # print("原始响应:", encrypted_data)
@@ -624,8 +624,11 @@ def translate(des):
         # 合并为单个字符串（保留原有标点）
         return "".join(tgt_segments) if tgt_segments else "翻译结果为空"
         # return result_dict['translateResult'][0][0]['tgt']
-   except:
-        return "翻译出问题++++++++++++++++++++++++++++++++++++++++++++++++++++"
+   # except:
+   #      return "翻译出问题++++++++++++++++++++++++++++++++++++++++++++++++++++"
+    except Exception as e:
+        print(f"翻译过程出错: {str(e)}")
+        return "翻译失败"
 
 
 # 钉钉
