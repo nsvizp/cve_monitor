@@ -18,9 +18,10 @@ cve监控推送，自定义关键词、仓库等，支持tg，钉钉，微信，
 ## 钉钉
 
 1.   建立群聊（可以单人建群）
+ 
 ![image](https://github.com/user-attachments/assets/db64e077-39e8-48ca-a89b-937922852396)
 
-2.   智能群助手添加自定义机器人
+3.   智能群助手添加自定义机器人
 ![image](https://github.com/user-attachments/assets/d3f2578e-3b53-4485-8d1e-4f58a16fbdfb)
 
 ​			选择加签
