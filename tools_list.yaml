@@ -15,10 +15,10 @@ tools_list:
 
 
 keyword_list:
- - Sql注入
  - cnvd
  - 未授权
  - RCE
+ - CNNVD
 
 user_list:
  - yhy0
@@ -29,4 +29,4 @@ user_list:
  - lijiejie
  - projectdiscovery
  - HavocFramework
- - nsvizp
+ - vulhub
