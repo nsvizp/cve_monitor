@@ -8,6 +8,8 @@
 # screen python3 1.py
 # screen -ls
 # screen -r CVE
+# 推荐使用
+#  nohup python3 cve_monitor_myxfc_des.py > cve.log 2>&1 &
 import json
 from collections import OrderedDict
 import requests, time, re
