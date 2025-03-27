@@ -38,35 +38,15 @@ cve监控推送，自定义关键词、仓库等，支持tg，钉钉，微信，
 
 
 
-##  飞书捷径推送
+##  飞书推送
 
-@[sodmelody](https://github.com/sodmelody) 添加
+方法与钉钉添加群机器人类似
 
->   飞书工作台  - 飞书捷径 -webhook
-
-![image](https://user-images.githubusercontent.com/29257678/136410980-302be028-3817-447c-9bad-e3d63045060d.png)
-
-注意参数这里：
-
-添加下列json信息
-
-```php
-{"at":{},"msgtype":"text","text":{"content":"有新的CVE送达！\r\nCVE编号：CVE-2021-41773\r\nGithub地址：https://github.com/iilegacyyii/PoC-CVE-2021-41773\r\nCVE描述：\r\n在Apache HTTP Server 2.4.49的路径规范化更改中发现了一个缺陷。攻击者可以使用路径遍历攻击将url映射到预期文档根之外的文件。如果文档根目录之外的文件没有被“require all denied”保护，这些请求就可以成功。此外，这个缺陷可能会泄露解释文件(如CGI脚本)的源代码。众所周知，这个问题是在野外被利用的。此问题仅影响Apache 2.4.49，不影响Apache 2.4.49之前的版本。"}}
-```
-
-<img src="https://user-images.githubusercontent.com/29257678/136413189-f393dfa2-4874-4fea-b8be-7b5892d65fcf.png" style="zoom:20%"/>
-
-<img src="https://user-images.githubusercontent.com/29257678/136411286-99c2e4db-0d8a-4b61-8613-96e3ebad8e44.png" style="zoom:25%"/>
-
->   选择json里面的模块
-
-<img src="https://user-images.githubusercontent.com/29257678/136413413-48417c13-285d-47ff-9fba-c78bed592430.png" style="zoom:30%"/>
-
-`config.yaml`中配置`feishu`的`webhook`,`enable`设置为 `1`表示推送
 
 效果：
 
-![image](https://user-images.githubusercontent.com/29257678/136413553-48c2100b-8f2d-4f81-8b8b-74351bde0456.png)
+![image](https://github.com/user-attachments/assets/e8f0a2e6-85b3-4e53-a75f-22dd029623db)
+
 
 ## Telegram Bot推送支持
 @[atsud0](https://github.com/atsud0) 师傅添加了 Telegram 推送
