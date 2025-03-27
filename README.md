@@ -9,10 +9,7 @@ cve监控推送，自定义关键词、仓库等，支持tg，钉钉，微信，
 `config.yaml` 推送token 设置
 效果
 ![image](https://github.com/user-attachments/assets/db0bb777-b057-4665-9e33-8a0b20f8b76b)
-# 鸣谢
- yhy0 提供初始代码 由于翻译接口失效，所以在这里借鉴大佬代码，复活了翻译功能
 
-#设置教程
 # 推送设置
 
 ## 钉钉
@@ -94,5 +91,11 @@ ps：因微信的原因，server酱的旧版将在2021年4月后下线，新版�
 
 
 `config.yaml`中配置github_token
+
+
+# 鸣谢
+ yhy0 提供初始代码 由于翻译接口失效，所以在这里借鉴大佬代码，复活了翻译功能
+
+
 
 
