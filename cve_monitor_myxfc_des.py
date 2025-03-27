@@ -731,15 +731,16 @@ def get_cve_des_zh(cve):
         query_cve_url = "https://cve.mitre.org/cgi-bin/cvename.cgi?name=" + cve
         response = requests.get(query_cve_url, timeout=10)
         html = etree.HTML(response.text)
+        # 获取cve
         des = html.xpath('//*[@id="GeneratedTable"]/table//tr[4]/td/text()')[0].strip()
         cve_time = html.xpath('//*[@id="GeneratedTable"]/table//tr[11]/td[1]/b/text()')[0].strip()
         # 添加默认返回值
         if load_config()[-1]:
             translated = translate(des)
             # return translated or "翻译失败", cve_time  # 处理翻译返回None的情况
-            return translated,cve_time
+            return des,translated,cve_time
         else:
-            return des, cve_time
+            return des, "",cve_time
     except Exception as e:
         print(f"获取CVE描述失败: {str(e)}")
         return "描述获取失败", "未知时间"  # 返回默认值
