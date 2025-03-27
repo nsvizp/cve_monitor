@@ -767,15 +767,26 @@ def get_cve_des_zh(cve):
 #发送CVE信息到社交工具
 def sendNews(data):
     try:
-        text = '有新的CVE送达! \r\n** 请自行分辨是否为红队钓鱼!!! **'
+        text = '有新的CVE送达! \r\n** 请自行分辨是否为红队钓鱼!!! **\r\n** 有道翻译可能存在误差!!! **'
         # 获取 cve 名字 ，根据cve 名字，获取描述，并翻译
         for i in range(len(data)):
             try:
-                cve_name = re.findall('(CVE\-\d+\-\d+)', data[i]['cve_name'])[0].upper()
-                cve_zh, cve_time = get_cve_des_zh(cve_name)
-                print(cve_zh)
-                body = "CVE编号: " + cve_name + "  ---cve_zh " + cve_time + " \r\n" + "Github地址: " + str(
-                    data[i]['cve_url']) + "\r\n" + "CVE描述: " + "\r\n" + cve_zh
+                cve_name = re.findall(r'(CVE-\d+-\d+)', data[i]['cve_name'])[0].upper()
+                # 接收三个返回值
+                raw_des, translated_des, cve_time = get_cve_des_zh(cve_name)
+                print(translated_des)
+                body = (
+                    f"CVE编号: {cve_name}  --- 收录时间 {cve_time} \r\n"
+                    f"Github地址: {data[i]['cve_url']} \r\n"
+                    f"CVE原文描述:\r\n{raw_des}\r\n"
+                    f"CVE译文描述:\r\n{translated_des}"
+                )
+
+                # cve_name = re.findall('(CVE\-\d+\-\d+)', data[i]['cve_name'])[0].upper()
+                # cve_zh, cve_time = get_cve_des_zh(cve_name)
+                # print(cve_zh)
+                # body = "CVE编号: " + cve_name + "  ---cve_zh " + cve_time + " \r\n" + "Github地址: " + str(
+                #     data[i]['cve_url']) + "\r\n"  + "CVE译文描述: " + "\r\n" + cve_zh
                 if load_config()[0] == "dingding":
                     dingding(text, body, load_config()[2], load_config()[3])
                     print("钉钉 发送 CVE 成功")
@@ -795,7 +806,6 @@ def sendNews(data):
                 pass
     except Exception as e:
         print("sendNews 函数 error:{}".format(e))
-
 #发送信息到社交工具
 def sendKeywordNews(keyword, data):
     try:
