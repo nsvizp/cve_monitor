@@ -637,10 +637,63 @@ def translate(des):
 def dingding(text, msg,webhook,secretKey):
     ding = cb.DingtalkChatbot(webhook, secret=secretKey)
     ding.send_text(msg='{}\r\n{}'.format(text, msg), is_at_all=False)
-## 飞书
-def feishu(text,msg,webhook):
-    ding = cb.DingtalkChatbot(webhook)
-    ding.send_text(msg='{}\r\n{}'.format(text, msg), is_at_all=False)
+# 飞书
+def feishu(text, msg, webhook, secret=None):
+    try:
+        # def gen_sign(secret):
+        #     """生成飞书签名"""
+        #     timestamp = int(time.time())
+        #     string_to_sign = f"{timestamp}\n{secret}"
+        #     hmac_code = hmac.new(
+        #         key=secret.encode('utf-8'),
+        #         msg=string_to_sign.encode('utf-8'),
+        #         digestmod=hashlib.sha256
+        #     ).digest()
+        #     feishu_sign = base64.b64encode(hmac_code).decode('utf-8')
+        #     return timestamp, feishu_sign
+
+        # 构造请求头
+        headers = {
+            "Content-Type": "application/json",
+
+        }
+
+        payload = {
+            # "timestamp": timestamp,
+            # "sign": sign,
+            "msg_type": "text",
+            "content": {
+                "text": f"{text}\n{msg}"
+            }
+        }
+
+
+        # print(f"[飞书调试] 完整请求头：{headers}")
+        # print(f"[飞书调试] 请求内容：{json.dumps(payload, indent=2, ensure_ascii=False)}")
+
+        response = requests.post(
+            webhook,
+            headers=headers,
+            json=payload,
+            timeout=10
+        )
+
+        # print(f"[飞书调试] 原始响应：{response.status_code} - {response.text}")
+
+        if response.status_code != 200:
+            print(f"飞书消息发送失败，状态码：{response.status_code}")
+            return False
+
+        result = response.json()
+        if result.get("code") != 0:
+            print(f"飞书接口返回错误：{result.get('msg')}")
+            return False
+
+        return True
+
+    except Exception as e:
+        print(f"飞书消息发送异常：{str(e)}")
+        return False
 # server酱  http://sc.ftqq.com/?c=code
 def server(text, msg,sckey):
     try:
