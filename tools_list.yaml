@@ -12,6 +12,9 @@ tools_list:
   - https://api.github.com/repos/SafeGroceryStore/MDUT
   - https://api.github.com/repos/EdgeSecurityTeam/Vulnerability
   - https://api.github.com/repos/yaklang/yakit
+  - https://api.github.com/repos/G3et/Search_Viewer
+  - https://api.github.com/repos/sqlmapproject/sqlmap
+  - https://api.github.com/repos/co01cat/SqlmapXPlus
 
 
 keyword_list:
