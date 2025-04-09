@@ -1,0 +1,12 @@
+t] 
+Description=Run CVE Service
+After=network.target
+
+[Service] 
+ExecStart=/xxx/xxx/run_python_forever.sh
+Restart=always 
+User=xxx
+WorkingDirectory=/xxx/xxx
+
+[Install]
+WantedBy=multi-user.target
