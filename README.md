@@ -1,4 +1,4 @@
-# cve-monitor
+## cve-monitor
 cve监控推送，自定义关键词、仓库等，支持钉钉，飞书等并实现cve描述翻译功能
 ### 实时监控github上新增的cve和安全工具更新，多渠道推送通知
 DES版本具有原文描述和译文描述
@@ -16,7 +16,7 @@ DES版本效果：
 ![image](https://github.com/user-attachments/assets/0748d68b-b788-483b-b255-591d14863b77)
 
 
-# 推送设置
+## 推送设置
 
 ## 钉钉
 
@@ -89,7 +89,7 @@ ps：因微信的原因，server酱的旧版将在2021年4月后下线，新版�
 
 具体配置方法见 pushplus 公众号文章：https://mp.weixin.qq.com/s/YRYb04PUFNVZejzV2G-k4w
 
-# Github 访问限制
+## Github 访问限制
 
 监控工具更新 请求次数过多，超过了每小时请求，添加gihtub token
 
