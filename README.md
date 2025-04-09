@@ -102,6 +102,45 @@ ps：因微信的原因，server酱的旧版将在2021年4月后下线，新版�
 
 `config.yaml`中配置github_token
 
+#使用systemd方法稳定后台运行
+
+注意要更改 run_python_forever.sh 里面的脚本路径和运行路径，更改完成后运行以下几个步骤
+
+1、创建systemd服务
+sudo vi /etc/systemd/system/run_python_forever.service
+2、写入
+
+[Unit]
+Description=Run Python script forever
+After=network.target
+
+[Service]
+ExecStart=/path/to/run_python_forever.sh
+Restart=always
+User=your_username
+WorkingDirectory=/path/to/working/directory
+
+[Install]
+WantedBy=multi-user.target
+
+
+---------------------------------------------------------
+
+替换 /path/to/run_python_forever.sh 为脚本的绝对路径。
+替换 your_username 为运行脚本的用户。
+替换 /path/to/working/directory 为脚本的工作目录
+
+3、重新加载systemd服务
+sudo systemctl daemon-reload
+
+4、启动
+sudo systemctl start run_python_forever.service
+
+5、开机自启
+sudo systemctl enable run_python_forever.service
+
+
+
 
 # 鸣谢
  借鉴 yhy0 代码 并进行修改，优化，复活添加翻译，飞书。
