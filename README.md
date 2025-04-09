@@ -1,4 +1,4 @@
-## cve-monitor
+# cve-monitor
 cve监控推送，自定义关键词、仓库等，支持钉钉，飞书等并实现cve描述翻译功能
 ### 实时监控github上新增的cve和安全工具更新，多渠道推送通知
 DES版本具有原文描述和译文描述
@@ -9,10 +9,13 @@ DES版本具有原文描述和译文描述
 `tools_list.yaml` 监控的工具列表，新添加按照已有的格式写
 
 `config.yaml` 推送token 设置
+
 效果
+
 ![image](https://github.com/user-attachments/assets/db0bb777-b057-4665-9e33-8a0b20f8b76b)
 
 DES版本效果：
+
 ![image](https://github.com/user-attachments/assets/0748d68b-b788-483b-b255-591d14863b77)
 
 
@@ -98,7 +101,9 @@ ps：因微信的原因，server酱的旧版将在2021年4月后下线，新版�
 >
 >   而通过使用基本身份验证的 API 请求，每小时最多可以发出 5,000 个请求
 >
->   https://github.com/settings/tokens/new 创建token，时间的话选无限制的，毕竟要一直跑![image](https://github.com/user-attachments/assets/3bb2db6f-1cc8-47bd-be96-c6213afc023c)
+>   https://github.com/settings/tokens/new 创建token，时间的话选无限制的，毕竟要一直跑
+>
+> ![image](https://github.com/user-attachments/assets/3bb2db6f-1cc8-47bd-be96-c6213afc023c)
 
 
 `config.yaml`中配置github_token
