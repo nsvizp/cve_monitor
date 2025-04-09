@@ -111,7 +111,7 @@ chmod +x run_python_forever.sh
 1、创建systemd服务
 sudo vi /etc/systemd/system/run_python_forever.service
 2、写入
-
+```
 [Unit]
 Description=Run Python script forever
 After=network.target
@@ -124,7 +124,7 @@ WorkingDirectory=/path/to/working/directory
 
 [Install]
 WantedBy=multi-user.target
-
+```
 
 ---------------------------------------------------------
 
