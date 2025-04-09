@@ -105,11 +105,15 @@ ps：因微信的原因，server酱的旧版将在2021年4月后下线，新版�
 ## 使用systemd方法稳定后台运行
 
 注意要更改 run_python_forever.sh 里面的脚本路径、运行路径和运行用户名并给sh脚本权限，
+```
 chmod +x run_python_forever.sh
+```
 更改完成后运行以下几个步骤
 
 1、创建systemd服务
+```
 sudo vi /etc/systemd/system/run_python_forever.service
+```
 2、写入
 ```
 [Unit]
@@ -133,14 +137,17 @@ WantedBy=multi-user.target
 替换 /path/to/working/directory 为脚本的工作目录
 
 3、重新加载systemd服务
+```
 sudo systemctl daemon-reload
-
+```
 4、启动
+```
 sudo systemctl start run_python_forever.service
-
+```
 5、开机自启
+```
 sudo systemctl enable run_python_forever.service
-
+```
 
 
 
