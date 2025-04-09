@@ -102,7 +102,7 @@ ps：因微信的原因，server酱的旧版将在2021年4月后下线，新版�
 
 `config.yaml`中配置github_token
 
-#使用systemd方法稳定后台运行
+## 使用systemd方法稳定后台运行
 
 注意要更改 run_python_forever.sh 里面的脚本路径和运行路径，更改完成后运行以下几个步骤
 
