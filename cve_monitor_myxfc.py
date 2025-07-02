@@ -516,7 +516,7 @@ def md5_hash(s):
     md5.update(s.encode('utf-8'))
     return md5.digest()  # 确保返回bytes类型
 
-secretKey_param = "Vy4EQ1uwPkUoqvcP1nIu6WiAjxFeA3Y3"  # 翻译失败很可能是三个key值的改变
+secretKey_param = "SRz6r3IGA6lj9i5zW0OYqgVZOtLDQe3e"  # 翻译失败很可能是三个key值的改变
 aes_iv_str = "ydsecret://query/iv/C@lZe2YzHtZ2CYgaXKSVfsb7Y4QWHjITPPZ0nQp87fBeJ!Iv6v^6fvi2WN@bYpJ4"
 aes_key_str = "ydsecret://query/key/B*RGygVywfNBwpmBaZg*WT7SIOUP2T0C9WHMZN39j^DAdaZhAnxvGcCY6VYFwnHl"
 # secretKey = secretKey_str
