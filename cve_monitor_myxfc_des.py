@@ -1,67 +1,109 @@
 #!/usr/bin/python3
 # -*- coding:utf-8 -*-
 # @Author : myxfc
+# 每3分钟检测一次github
 
-
-# 每3分钟检测一次githu
-# screen -S CVE
-# screen python3 1.py
-# screen -ls
-# screen -r CVE
-# 推荐使用
-#  nohup python3 cve_monitor_myxfc_des.py > cve.log 2>&1 &
-import json
-from collections import OrderedDict
-import requests, time, re
-import dingtalkchatbot.chatbot as cb
+import base64
 import datetime
 import hashlib
-import yaml
-from lxml import etree
+import json
+import re
 import sqlite3
-import execjs
-import hashlib
-import Crypto.Cipher.AES as AES
-from Crypto.Util.Padding import pad, unpad
-import base64
+import time
+from collections import OrderedDict
 from functools import lru_cache
-
-
+import Crypto.Cipher.AES as AES
+import dingtalkchatbot.chatbot as cb
+import requests
+import yaml
+from Crypto.Util.Padding import unpad
+from lxml import etree
+import threading
 # cve 仓库拥有者计数器(也就是黑名单，不过每天会清空重新计数)，每天最多推送一个人名下的三个 cve 仓库
 counter = {}
 
-#读取配置文件
+#读取配置文件(config.yaml)
 def load_config():
-    with open('config.yaml', 'r', encoding='utf-8') as f:
-        config = yaml.load(f,Loader=yaml.FullLoader)
-        github_token = config['all_config']['github_token']
-        translate = False
-        if int(config['all_config']['translate'][0]['enable']) == 1:
-            translate = True
-        if int(config['all_config']['dingding'][0]['enable']) == 1:
-            dingding_webhook = config['all_config']['dingding'][1]['webhook']
-            dingding_secretKey = config['all_config']['dingding'][2]['secretKey']
-            app_name = config['all_config']['dingding'][3]['app_name']
-            return app_name,github_token,dingding_webhook,dingding_secretKey, translate
-        elif int(config['all_config']['feishu'][0]['enable']) == 1:
-            feishu_webhook = config['all_config']['feishu'][1]['webhook']
-            app_name = config['all_config']['feishu'][2]['app_name']
-            return app_name,github_token,feishu_webhook,feishu_webhook, translate
-        elif int(config['all_config']['server'][0]['enable']) == 1:
-            server_sckey = config['all_config']['server'][1]['sckey']
-            app_name = config['all_config']['server'][2]['app_name']
-            return app_name,github_token,server_sckey, translate
-        elif int(config['all_config']['pushplus'][0]['enable']) == 1:
-            pushplus_token = config['all_config']['pushplus'][1]['token']
-            app_name = config['all_config']['pushplus'][2]['app_name']
-            return app_name,github_token,pushplus_token, translate
-        elif int(config['all_config']['tgbot'][0]['enable']) ==1 :
-            tgbot_token = config['all_config']['tgbot'][1]['token']
-            tgbot_group_id = config['all_config']['tgbot'][2]['group_id']
-            app_name = config['all_config']['tgbot'][3]['app_name']
-            return app_name,github_token,tgbot_token,tgbot_group_id, translate
-        elif int(config['all_config']['tgbot'][0]['enable']) == 0 and int(config['all_config']['feishu'][0]['enable']) == 0 and int(config['all_config']['server'][0]['enable']) == 0 and int(config['all_config']['pushplus'][0]['enable']) == 0 and int(config['all_config']['dingding'][0]['enable']) == 0:
-            print("[-] 配置文件有误, 五个社交软件的enable不能为0")
+    try:
+        with open('config.yaml', 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)  # 使用 safe_load 更安全
+            all_config = config['all_config']
+            github_token = all_config['github_token']
+            translate = int(all_config['translate'][0]['enable']) == 1
+
+            # 存储所有启用的配置
+            enabled_configs = []
+
+            # 检查并添加 DingDing 配置
+            if int(all_config['dingding'][0]['enable']) == 1:
+                dingding_config = {
+                    "type": "dingding",
+                    "app_name": all_config['dingding'][3]['app_name'],
+                    "dingding_webhook": all_config['dingding'][1]['webhook'],
+                    "dingding_secretKey": all_config['dingding'][2]['secretKey'],
+                }
+                enabled_configs.append(dingding_config)
+
+            # 检查并添加 Feishu 配置
+            if int(all_config['feishu'][0]['enable']) == 1:
+                feishu_config = {
+                    "type": "feishu",
+                    "app_name": all_config['feishu'][2]['app_name'],
+                    "feishu_webhook": all_config['feishu'][1]['webhook'],
+                }
+                enabled_configs.append(feishu_config)
+
+            # 检查并添加 Server 酱 配置
+            if int(all_config['server'][0]['enable']) == 1:
+                server_config = {
+                    "type": "server",
+                    "app_name": all_config['server'][2]['app_name'],
+                    "server_sckey": all_config['server'][1]['sckey'],
+                }
+                enabled_configs.append(server_config)
+
+            # 检查并添加 Pushplus 配置
+            if int(all_config['pushplus'][0]['enable']) == 1:
+                pushplus_config = {
+                    "type": "pushplus",
+                    "app_name": all_config['pushplus'][2]['app_name'],
+                    "pushplus_token": all_config['pushplus'][1]['token'],
+                }
+                enabled_configs.append(pushplus_config)
+
+            # 检查并添加 Tgbot 配置
+            if int(all_config['tgbot'][0]['enable']) == 1:
+                tgbot_config = {
+                    "type": "tgbot",
+                    "app_name": all_config['tgbot'][3]['app_name'],
+                    "tgbot_token": all_config['tgbot'][1]['token'],
+                    "tgbot_group_id": all_config['tgbot'][2]['group_id'],
+                }
+                enabled_configs.append(tgbot_config)
+
+            # 如果没有启用任何配置，则抛出异常
+            if not enabled_configs:
+                raise ValueError("[-] 配置文件有误, 至少需要启用一个社交软件的 enable")
+
+            return enabled_configs, github_token, translate  # 返回所有配置和 github_token
+
+    except FileNotFoundError:
+        print("[-] 配置文件 config.yaml 不存在")
+        exit()  # 退出程序
+    except yaml.YAMLError as e:
+        print(f"[-] 配置文件 config.yaml 解析错误: {e}")
+        exit()  # 退出程序
+    except KeyError as e:
+        print(f"[-] 配置文件 config.yaml 缺少必要的键: {e}")
+        exit()  # 退出程序
+    except ValueError as e:
+        print(e)  # 输出错误信息
+        exit()  # 退出程序
+    except Exception as e:
+        print(f"[-] 读取配置文件时发生未知错误: {e}")
+        exit()  # 退出程序
+
+
 
 github_headers = {
     'Authorization': "token {}".format(load_config()[1])
@@ -161,49 +203,143 @@ def getNews():
         print(e, "github链接不通")
         return '', '', ''
 
+
+
 def getKeywordNews(keyword):
     today_keyword_info_tmp = []
     try:
-        # 抓取本年的
-        api = "https://api.github.com/search/repositories?q={}&sort=updated".format(keyword)
-        json_str = requests.get(api, headers=github_headers, timeout=10).json()
+        now = datetime.datetime.utcnow()
+        # 计算24小时前的时间
+        since_time = (now - datetime.timedelta(hours=24)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        # GitHub API 查询
+        api = f"https://api.github.com/search/repositories?q={keyword}+pushed:>{since_time}&sort=updated"
+        response = requests.get(api, headers=github_headers, timeout=10)
+        if response.status_code != 200:
+            print(f"GitHub API 请求失败，状态码: {response.status_code}")
+            return []
+        json_str = response.json()
+        if not json_str or 'items' not in json_str:
+            print("GitHub API 返回空数据或格式错误")
+            return today_keyword_info_tmp
+
         today_date = datetime.date.today()
-        n = len(json_str['items'])
-        if n > 20:
-            n = 20
-        for i in range(0, n):
-            keyword_url = json_str['items'][i]['html_url']
-            if keyword_url.split("/")[-2] not in black_user():
-                try:
-                    keyword_name = json_str['items'][i]['name']
-                    pushed_at_tmp = json_str['items'][i]['created_at']
-                    pushed_at = re.findall('\d{4}-\d{2}-\d{2}', pushed_at_tmp)[0]
+        items = json_str['items']
+        n = min(len(items), 20)
+
+        # 统一关键字判断（不区分大小写）
+        keyword_upper = keyword.strip().upper()
+        is_cnvd_or_cnnvd = keyword_upper in ('CNVD', 'CNNVD')
+
+        for i in range(n):
+            keyword_url = items[i]['html_url']
+            if keyword_url.split("/")[-2] in black_user():
+                continue
+
+            try:
+                keyword_name = items[i]['name']
+                pushed_at_tmp = items[i]['created_at']
+                pushed_at = re.findall(r'\d{4}-\d{2}-\d{2}', pushed_at_tmp)[0]
+
+                # 如果传入的关键字是CNVD/CNNVD，或者仓库名称包含CNVD/CNNVD，则跳过CVE检查
+                if is_cnvd_or_cnnvd or 'CNVD' in keyword_name.upper() or 'CNNVD' in keyword_name.upper():
                     if pushed_at == str(today_date):
-                        today_keyword_info_tmp.append({"keyword_name": keyword_name, "keyword_url": keyword_url, "pushed_at": pushed_at})
-                        print("[+] keyword: {} ,{}".format(keyword, keyword_name))
+                        today_keyword_info_tmp.append({
+                            "keyword_name": keyword_name,
+                            "keyword_url": keyword_url,
+                            "pushed_at": pushed_at
+                        })
+                        print(f"[+] CNVD/CNNVD关键字或仓库匹配: {keyword_name}")
                     else:
-                        print("[-] keyword: {} ,该{}的更新时间为{}, 不属于今天".format(keyword, keyword_name, pushed_at))
-                except Exception as e:
-                    pass
-            else:
-                pass
+                        print(f"[-] 仓库 {keyword_name} 的更新时间 {pushed_at} 不属于今天")
+                    continue  # 跳过后续所有检查
+
+                # 非CNVD/CNNVD关键字：检查CVE编号
+                keyword_description = items[i].get('description', '') or ''
+                keyword_topics = items[i].get('topics', []) or []
+                cve_pattern = re.compile(r'CVE\-\d+\-\d+', re.IGNORECASE)
+
+                # 检查名称、描述或主题中是否包含CVE
+                has_cve = (cve_pattern.search(keyword_name) or
+                           cve_pattern.search(keyword_description) or
+                           any(cve_pattern.search(topic) for topic in keyword_topics))
+
+                if not has_cve:
+                    # 检查README文件
+                    owner, repo = keyword_url.split('/')[-2], keyword_url.split('/')[-1]
+                    readme_url = f"https://api.github.com/repos/{owner}/{repo}/readme"
+                    readme_response = requests.get(readme_url, headers=github_headers, timeout=10)
+
+                    if readme_response.status_code == 200:
+                        readme_json = readme_response.json()
+                        readme_content = readme_json.get('content', '')
+                        if readme_content:
+                            try:
+                                readme_text = base64.b64decode(readme_content).decode('utf-8')
+                                if not cve_pattern.search(readme_text):
+                                    print(f"[-] 仓库 {keyword_name} 不包含CVE编号，跳过")
+                                    continue
+                            except (base64.binascii.Error, UnicodeDecodeError) as e:
+                                print(f"解码README失败: {e}")
+                                continue
+                    else:
+                        print(f"[-] 无法获取仓库 {keyword_name} 的README文件，跳过")
+                        continue
+
+                # 检查日期
+                if pushed_at == str(today_date):
+                    today_keyword_info_tmp.append({
+                        "keyword_name": keyword_name,
+                        "keyword_url": keyword_url,
+                        "pushed_at": pushed_at
+                    })
+                    print(f"[+] 关键字 {keyword} 匹配的仓库: {keyword_name}")
+                else:
+                    print(f"[-] 仓库 {keyword_name} 的更新时间 {pushed_at} 不属于今天")
+
+            except Exception as e:
+                print(f"处理仓库 {keyword_name} 时出错: {e}")
+                continue
+
+        # 去重逻辑
         today_keyword_info = OrderedDict()
         for item in today_keyword_info_tmp:
             user_name = item['keyword_url'].split("/")[-2]
             if user_name in counter:
                 if counter[user_name] < 3:
-                    counter[user_name] +=1
-                    today_keyword_info.setdefault(item['keyword_name'], {**item, })
+                    counter[user_name] += 1
+                    today_keyword_info.setdefault(item['keyword_name'], item)
             else:
-                 counter[user_name] = 0
-                 today_keyword_info.setdefault(item['keyword_name'], {**item, })
-        today_keyword_info = list(today_keyword_info.values())
+                counter[user_name] = 1
+                today_keyword_info.setdefault(item['keyword_name'], item)
 
-        return today_keyword_info
+        return list(today_keyword_info.values())
 
     except Exception as e:
-        print(e, "github链接不通")
-    return today_keyword_info_tmp
+        print(f"发生未知错误: {e}")
+        return today_keyword_info_tmp
+
+
+def get_today_keyword_info(today_keyword_info_data):
+    today_all_keyword_info = []
+    for i in range(len(today_keyword_info_data)):
+        try:
+            today_keyword_name = today_keyword_info_data[i]['keyword_name']
+            # 双重检查确保包含CVE编号
+            today_cve_name = re.findall('(CVE\-\d+\-\d+)', today_keyword_info_data[i]['keyword_name'].upper())
+            if not today_cve_name:
+                continue
+
+            Verify = query_keyword_info_database(today_keyword_name)
+            if Verify == 0:
+                print("[+] 数据库里不存在{}".format(today_keyword_name))
+                today_all_keyword_info.append(today_keyword_info_data[i])
+            else:
+                print("[-] 数据库里存在{}".format(today_keyword_name))
+        except Exception as e:
+            pass
+    return today_all_keyword_info
+
 
 #获取到的关键字仓库信息插入到数据库
 def keyword_insert_into_sqlite3(data):
@@ -385,7 +521,7 @@ def getUserRepos(user):
                     except Exception as e:
                         description = "作者未写描述"
                     download_url = json_str[i]['html_url']
-                    text = r'大佬' + r'** ' + user + r' ** ' + r'又分享了一款工具! '
+                    text = r'大佬' + r'** ' + user + r' ** ' + r'又分享了一款工具! '+"\r\n监控机器人Author：MYXFC 公众号：密雾九尾"
                     body = "工具名称: " + name + " \r\n" + "工具地址: " + download_url + " \r\n" + "工具描述: " + "" + description
                     if load_config()[0] == "dingding":
                         dingding(text, body,load_config()[2],load_config()[3])
@@ -431,7 +567,7 @@ def send_body(url,query_pushed_at,query_tag_name):
                     update_log = "作者未写更新内容"
                 download_url = json_str[0]['html_url']
                 tools_name = url.split('/')[-1]
-                text = r'** ' + tools_name + r' ** 工具,版本更新啦!'
+                text = r'** ' + tools_name + r' ** 工具,版本更新啦!'+"\r\n监控机器人Author：MYXFC 公众号：密雾九尾"
                 body = "工具名称：" + tools_name + "\r\n" + "工具地址：" + download_url + "\r\n" + "工具更新日志：" + "\r\n" + update_log
                 if load_config()[0] == "dingding":
                     dingding(text, body,load_config()[2],load_config()[3])
@@ -460,7 +596,7 @@ def send_body(url,query_pushed_at,query_tag_name):
                     update_log = commits_json[0]['commit']['message']
                 except Exception as e:
                     update_log = "作者未写更新内容，具体点击更新详情地址的URL进行查看"
-                text = r'** ' + tools_name + r' ** 工具小更新了一波!'
+                text = r'** ' + tools_name + r' ** 工具小更新了一波!'+"\r\n监控机器人Author：MYXFC 公众号：密雾九尾"
                 body = "工具名称：" + tools_name + "\r\n" + "更新详情地址：" + download_url + "\r\n" + "commit更新日志：" + "\r\n" + update_log
                 if load_config()[0] == "dingding":
                     dingding(text, body,load_config()[2],load_config()[3])
@@ -516,7 +652,7 @@ def md5_hash(s):
     md5.update(s.encode('utf-8'))
     return md5.digest()  # 确保返回bytes类型
 
-secretKey_param = "SRz6r3IGA6lj9i5zW0OYqgVZOtLDQe3e"  # 翻译失败很可能是三个key值的改变
+secretKey_param = "Vy4EQ1uwPkUoqvcP1nIu6WiAjxFeA3Y3"  # 翻译失败很可能是三个key值的改变
 aes_iv_str = "ydsecret://query/iv/C@lZe2YzHtZ2CYgaXKSVfsb7Y4QWHjITPPZ0nQp87fBeJ!Iv6v^6fvi2WN@bYpJ4"
 aes_key_str = "ydsecret://query/key/B*RGygVywfNBwpmBaZg*WT7SIOUP2T0C9WHMZN39j^DAdaZhAnxvGcCY6VYFwnHl"
 # secretKey = secretKey_str
@@ -599,7 +735,7 @@ def translate(des):
         # if decrypted_text:
         # print("\n翻译结果:")
         # print(json.dumps(json.loads(decrypted_text), indent=2, ensure_ascii=False))
-        #     print(['translateResult'][0]['tgt'])
+        #     print(['translateResult'][f0]['tgt'])
         # print(decrypted_text)
         # print("=============================================")
         result_dict = json.loads(decrypted_text)
@@ -634,63 +770,72 @@ def translate(des):
 
 
 # 钉钉
-def dingding(text, msg,webhook,secretKey):
+def dingding(text, msg, webhook, secretKey):
     ding = cb.DingtalkChatbot(webhook, secret=secretKey)
     ding.send_text(msg='{}\r\n{}'.format(text, msg), is_at_all=False)
 # 飞书
-def feishu(text, msg, webhook, secret=None):
+def feishu(title, content, webhook):  # 移除 secret 参数
     try:
-        # def gen_sign(secret):
-        #     """生成飞书签名"""
-        #     timestamp = int(time.time())
-        #     string_to_sign = f"{timestamp}\n{secret}"
-        #     hmac_code = hmac.new(
-        #         key=secret.encode('utf-8'),
-        #         msg=string_to_sign.encode('utf-8'),
-        #         digestmod=hashlib.sha256
-        #     ).digest()
-        #     feishu_sign = base64.b64encode(hmac_code).decode('utf-8')
-        #     return timestamp, feishu_sign
-        
-        headers = {
-            "Content-Type": "application/json",
-
-        }
-        payload = {
-            # "timestamp": timestamp,
-            # "sign": sign,
+        data = {
             "msg_type": "text",
             "content": {
-                "text": f"{text}\n{msg}"
+                "text": title + "\n" + content
             }
         }
+        headers = {'Content-Type': 'application/json'}
 
-        # 调试信息
-        # print(f"[飞书调试] 完整请求头：{headers}")
-        # print(f"[飞书调试] 请求内容：{json.dumps(payload, indent=2, ensure_ascii=False)}")
+        response = requests.post(webhook, data=json.dumps(data), headers=headers)
+        response.raise_for_status()  # 抛出 HTTPError 异常 (如果状态码不是 200)
+        print(f"飞书消息发送成功 (无签名校验): {response.text}")
 
-        response = requests.post(
-            webhook,
-            headers=headers,
-            json=payload,
-            timeout=10
-        )
-        # print(f"[飞书调试] 原始响应：{response.status_code} - {response.text}")
-
-        if response.status_code != 200:
-            print(f"飞书消息发送失败，状态码：{response.status_code}")
-            return False
-
-        result = response.json()
-        if result.get("code") != 0:
-            print(f"飞书接口返回错误：{result.get('msg')}")
-            return False
-
-        return True
-
+    except requests.exceptions.RequestException as e:
+        print(f"飞书消息发送失败 (无签名校验): {e}")
     except Exception as e:
-        print(f"飞书消息发送异常：{str(e)}")
-        return False
+        print(f"飞书消息发送时发生未知错误 (无签名校验): {e}")
+
+# 疑似飞书sign时间戳服务器错误，移除 gen_sign 函数
+# def gen_sign(timestamp, secret):
+#     string_to_sign = '{}\n{}'.format(timestamp, secret)
+#     hmac_code = hmac.new(secret.encode("utf-8"), string_to_sign.encode("utf-8"), digestmod=hashlib.sha256).digest()
+#     sign = base64.b64encode(hmac_code).decode('utf-8')
+#     return sign
+# 飞书发送，有签名版本代码
+# def feishu(title, content, webhook, secret):
+#     try:
+#         timestamp = str(int(time.time()))
+#         sign = gen_sign(timestamp, secret)
+#
+#         data = {
+#             "msg_type": "text",
+#             "content": {
+#                 "text": title + "\n" + content
+#             },
+#             "timestamp": timestamp,
+#             "sign": sign
+#         }
+#         headers = {'Content-Type': 'application/json'}
+#
+#         # 打印调试信息
+#         print(f"飞书时间戳: {timestamp}")
+#         print(f"飞书签名字符串: {timestamp}\\n{secret}")
+#         print(f"飞书签名: {sign}")
+#         print(f"飞书请求体: {json.dumps(data)}")
+#
+#         response = requests.post(webhook, data=json.dumps(data), headers=headers)
+#         response.raise_for_status()  # 抛出 HTTPError 异常 (如果状态码不是 200)
+#         print(f"飞书消息发送成功 (签名校验): {response.text}")
+#
+#     except requests.exceptions.RequestException as e:
+#         print(f"飞书消息发送失败 (签名校验): {e}")
+#         if "sign match fail or timestamp is not within one hour from current time" in str(e):
+#             print("错误：飞书机器人签名校验失败，请检查 secretKey 和服务器时间！")
+#         else:
+#             print(f"其他错误: {e}")
+#     except Exception as e:
+#         print(f"飞书消息发送时发生未知错误 (签名校验): {e}")
+
+
+
 # server酱  http://sc.ftqq.com/?c=code
 def server(text, msg,sckey):
     try:
@@ -744,31 +889,34 @@ def get_cve_des_zh(cve):
     except Exception as e:
         print(f"获取CVE描述失败: {str(e)}")
         return "描述获取失败", "未知时间"  # 返回默认值
-# def get_cve_des_zh(cve):
-#     time.sleep(3)
-#     try:
-#         query_cve_url = "https://cve.mitre.org/cgi-bin/cvename.cgi?name=" + cve
-#         response = requests.get(query_cve_url, timeout=10)
-#         html = etree.HTML(response.text)
-#         des = html.xpath('//*[@id="GeneratedTable"]/table//tr[4]/td/text()')[0].strip()
-#         cve_time = html.xpath('//*[@id="GeneratedTable"]/table//tr[11]/td[1]/b/text()')[0].strip()
-#         if load_config()[-1]:
-#             return translate(des)
-#         return des, cve_time
-#     except Exception as e:
-#         pass
-    #     if load_config()[-1]:
-    #         print(f"[DEBUG] 开始翻译CVE描述: {des[:50]}...")  # 显示前50字符
-    #         translated = translate(des)
-    #         print(f"[DEBUG] 翻译结果: {translated}")
-    #         return translate(word)
-    #     return des, cve_time
-    # except Exception as e:
-    #     print(f"翻译异常: {str(e)}")
-#发送CVE信息到社交工具
+
+# 发送函数
+def send_message(platform, text, body, config):
+    try:
+        if platform == "dingding":
+            dingding(text, body, config.get("dingding_webhook"), config.get("dingding_secretKey"))
+            print("钉钉 发送 CVE 成功")
+        elif platform == "feishu":
+            feishu(text, body, config.get("feishu_webhook")) #, config.get("dingding_secretKey"))  # 移除 secret 参数
+            print("飞书 发送 CVE 成功")
+        elif platform == "server":
+            server(text, body, config.get("server_sckey"))
+            print("server酱 发送 CVE 成功")
+        elif platform == "pushplus":
+            pushplus(text, body, config.get("pushplus_token"))
+            print("pushplus 发送 CVE 成功")
+        elif platform == "tgbot":
+            tgbot(text, body, config.get("tgbot_token"), config.get("tgbot_group_id"))
+            print("tgbot 发送 CVE 成功")
+        else:
+            print(f"不支持的平台: {platform}")
+    except Exception as e:
+        print(f"{platform} 发送消息失败: {e}")
+
+# 发送CVE监控
 def sendNews(data):
     try:
-        text = '有新的CVE送达! \r\n** 请自行分辨是否为红队钓鱼!!! **\r\n** 有道翻译可能存在误差!!! **'
+        text = '有新的CVE送达! \r\n** 请自行分辨是否为红队钓鱼!!! **\r\n** 有道翻译可能存在误差!!! **\r\n**监控机器人Author：MYXFC 公众号：密雾九尾 **'
         # 获取 cve 名字 ，根据cve 名字，获取描述，并翻译
         for i in range(len(data)):
             try:
@@ -783,54 +931,51 @@ def sendNews(data):
                     f"CVE译文描述:\r\n{translated_des}"
                 )
 
-                # cve_name = re.findall('(CVE\-\d+\-\d+)', data[i]['cve_name'])[0].upper()
-                # cve_zh, cve_time = get_cve_des_zh(cve_name)
-                # print(cve_zh)
-                # body = "CVE编号: " + cve_name + "  ---cve_zh " + cve_time + " \r\n" + "Github地址: " + str(
-                #     data[i]['cve_url']) + "\r\n"  + "CVE译文描述: " + "\r\n" + cve_zh
-                if load_config()[0] == "dingding":
-                    dingding(text, body, load_config()[2], load_config()[3])
-                    print("钉钉 发送 CVE 成功")
-                if load_config()[0] == "feishu":
-                    feishu(text, body, load_config()[2])
-                    print("飞书 发送 CVE 成功")
-                if load_config()[0] == "server":
-                    server(text, body, load_config()[2])
-                    print("server酱 发送 CVE 成功")
-                if load_config()[0] == "pushplus":
-                    pushplus(text, body, load_config()[2])
-                    print("pushplus 发送 CVE 成功")
-                if load_config()[0] == "tgbot":
-                    tgbot(text, body, load_config()[2], load_config()[3])
-                    print("tgbot 发送 CVE 成功")
+                # 获取所有配置
+                configs, github_token, translate = load_config() # 获取全部配置和 github_token
+                threads = []
+
+                # 循环所有配置，并发发送
+                for config in configs:
+                    platform = config["type"]  # 获取平台类型
+                    thread = threading.Thread(target=send_message, args=(platform, text, body, config))
+                    threads.append(thread)
+                    thread.start()
+
+                # 等待所有线程执行完成
+                for thread in threads:
+                    thread.join()
+
             except IndexError:
                 pass
     except Exception as e:
         print("sendNews 函数 error:{}".format(e))
-#发送信息到社交工具
+
+# 发送关键字监控信息
 def sendKeywordNews(keyword, data):
     try:
-        text = '有新的关键字监控 - {} - 送达! \r\n** 请自行分辨是否为红队钓鱼!!! **'.format(keyword)
+        text = '有新的关键字监控 - {} - 送达! \r\n** 请自行分辨是否为红队钓鱼!!!\r\n**监控机器人Author：MYXFC 公众号：密雾九尾 **'.format(keyword)
         # 获取 cve 名字 ，根据cve 名字，获取描述，并翻译
         for i in range(len(data)):
             try:
                 keyword_name =  data[i]['keyword_name']
                 body = "项目名称: " + keyword_name + "\r\n" + "Github地址: " + str(data[i]['keyword_url']) + "\r\n"
-                if load_config()[0] == "dingding":
-                    dingding(text, body, load_config()[2], load_config()[3])
-                    print("钉钉 发送 CVE 成功")
-                if load_config()[0] == "feishu":
-                    feishu(text, body, load_config()[2])
-                    print("飞书 发送 CVE 成功")
-                if load_config()[0] == "server":
-                    server(text, body, load_config()[2])
-                    print("server酱 发送 CVE 成功")
-                if load_config()[0] == "pushplus":
-                    pushplus(text, body, load_config()[2])
-                    print("pushplus 发送 CVE 成功")                    
-                if load_config()[0] == "tgbot":
-                    tgbot(text, body, load_config()[2], load_config()[3])
-                    print("tgbot 发送 CVE 成功")
+
+                # 获取所有配置
+                configs, github_token, translate = load_config()
+                threads = []
+
+                # 循环所有配置，并发发送
+                for config in configs:
+                    platform = config["type"]  # 获取平台类型
+                    thread = threading.Thread(target=send_message, args=(platform, text, body, config))
+                    threads.append(thread)
+                    thread.start()
+
+                # 等待所有线程执行完成
+                for thread in threads:
+                    thread.join()
+
             except IndexError:
                 pass
     except Exception as e:
@@ -838,6 +983,7 @@ def sendKeywordNews(keyword, data):
 
 #main函数
 if __name__ == '__main__':
+
 
     print("cve 、github 工具 和 大佬仓库 监控中 ...")
     #初始化部分
