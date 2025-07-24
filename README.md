@@ -1,8 +1,6 @@
 # cve_monitor
 ## cve监控推送，自定义关键词、仓库等，支持钉钉，飞书等并实现cve描述翻译功能
 ### 实时监控github上新增的cve和安全工具更新，多渠道推送通知
-DES版本具有原文描述和译文描述
-普通版本默认翻译，不翻译可在cofig.yaml中关闭
 
 每3分钟检测一次github是否有新的cve漏洞提交或者安全工具更新记录，若有则通过配置的渠道通知用户
 1、使用帮助
@@ -10,11 +8,7 @@ DES版本具有原文描述和译文描述
 
 `config.yaml` 推送token 设置
 
-效果
-
-![image](https://github.com/user-attachments/assets/db0bb777-b057-4665-9e33-8a0b20f8b76b)
-
-DES版本效果：
+效果：
 
 ![image](https://github.com/user-attachments/assets/0748d68b-b788-483b-b255-591d14863b77)
 
@@ -39,11 +33,6 @@ DES版本效果：
 建立机器人，之后在`config.yaml`中配置，将webhook和秘钥secretKey填入对应的字段，`enable`设置为`1`表示使用该通知
 
 效果：
-
-![image](https://github.com/user-attachments/assets/0d0f6c1a-9f93-4358-8b32-2a9508fbac5c)
-
-
-DES版本效果：
 
 ![image](https://github.com/user-attachments/assets/4c5b43da-16e4-48ba-8b6a-c5522bef8150)
 
@@ -157,5 +146,5 @@ sudo systemctl enable run_python_forever.service
 
 
 
-# 鸣谢
+### 鸣谢
  借鉴 yhy0 代码 并进行修改，优化，复活添加翻译，飞书。
